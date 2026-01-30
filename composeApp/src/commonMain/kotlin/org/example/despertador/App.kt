@@ -1,48 +1,50 @@
 package org.example.despertador
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.painterResource
-
-import despertador.composeapp.generated.resources.Res
-import despertador.composeapp.generated.resources.compose_multiplatform
+import org.example.despertador.models.AlarmData
+import org.example.despertador.models.Screen
+import org.example.despertador.ui.screens.MainHomeScreen
+import org.example.despertador.ui.screens.WakeUpScreen
 
 @Composable
-@Preview
-fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+fun AppNavigation() {
+    // Estado que controla qual tela está ativa
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
+
+    // A lista de alarmes agora vive aqui, no topo da hierarquia de UI
+    val alarms: SnapshotStateList<AlarmData> = remember {
+        mutableStateListOf(
+            AlarmData(time = "06:00", period = "AM", label = "Academia", isEnabled = true, selectedDays = setOf(1, 2, 3, 4, 5)),
+            AlarmData(time = "08:30", period = "AM", label = "Trabalho", isEnabled = false, selectedDays = setOf(0, 6))
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val screen = currentScreen) {
+            is Screen.Home -> {
+                MainHomeScreen(
+                    alarms = alarms,
+                    onTriggerAlarm = { alarm ->
+                        currentScreen = Screen.WakeUp(alarm)
+                    }
+                )
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
+            is Screen.WakeUp -> {
+                WakeUpScreen(
+                    alarm = screen.alarm,
+                    onSnooze = {
+                        // Lógica de soneca: volta para home
+                        currentScreen = Screen.Home
+                    },
+                    onDismiss = {
+                        // Desliga alarme: volta para home
+                        currentScreen = Screen.Home
+                    }
+                )
             }
         }
     }
