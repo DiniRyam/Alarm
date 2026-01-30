@@ -44,9 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.example.despertador.models.AlarmData
 import org.example.despertador.ui.components.*
@@ -133,7 +131,7 @@ fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmD
                                         val index = alarms.indexOfFirst { it.id == alarm.id }
                                         if (index != -1) alarms[index] = alarm.copy(isEnabled = isEnabled)
                                     },
-                                    onDelete = { alarms.removeIf { it.id == alarm.id } },
+                                    onDelete = { alarms.remove(alarm) },
                                     onEditClick = {
                                         editingAlarm = alarm
                                         showModal = true
@@ -196,7 +194,7 @@ fun ConfigAlarmModal(
     onSave: (name: String, days: Set<Int>, snooze: String, vib: Boolean, newTime: String, newPeriod: String) -> Unit,
     onCancel: () -> Unit
 ) {
-    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     val initialTime = alarm?.time?.split(":")
     val initialHour = initialTime?.getOrNull(0) ?: now.hour.let { h -> if (h == 0 || h == 12) 12 else h % 12 }.toString().padStart(2, '0')
     val initialMinute = initialTime?.getOrNull(1) ?: now.minute.toString().padStart(2, '0')
@@ -215,7 +213,7 @@ fun ConfigAlarmModal(
 
     LaunchedEffect(selectedHour, selectedMinute, selectedPeriod, selectedDays) {
         val nextAlarmTime = calculateNextAlarmTime(selectedHour, selectedMinute, selectedPeriod, selectedDays)
-        val nowInstant = Clock.System.now()
+        val nowInstant = kotlin.time.Clock.System.now()
         val duration = nextAlarmTime?.let { it - nowInstant }
         timeToAlarmText = formatDuration(duration)
     }
