@@ -1,10 +1,12 @@
 package org.example.despertador.models
 
 import kotlin.random.Random
+import kotlinx.serialization.Serializable
 
 // Uma função simples para gerar um ID único em KMM sem usar bibliotecas específicas da plataforma.
 fun randomUUID(): String = "${Random.nextLong()}-${Random.nextLong()}"
 
+@Serializable
 data class AlarmData(
     val id: String = randomUUID(),
     val time: String,

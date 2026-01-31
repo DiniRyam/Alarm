@@ -76,17 +76,18 @@ fun formatDuration(duration: Duration?): String {
     if (duration == null || duration.isNegative()) return ""
 
     return duration.toComponents { days, hours, minutes, _, _ ->
+        // Se a duração total for menor que um minuto, retorna a mensagem especial.
+        if (days == 0L && hours == 0 && minutes == 0) {
+            // CORREÇÃO: Usa um retorno local para a lambda, o que é seguro para previews.
+            return@toComponents "Toca em menos de um minuto"
+        }
+
         val parts = mutableListOf<String>()
         if (days > 0) parts.add("${days}d")
         if (hours > 0) parts.add("${hours}h")
-        
-        if (minutes >= 0) {
-             if (parts.isEmpty() && minutes == 0L) {
-                 return "Toca em menos de um minuto"
-             }
-             parts.add("${minutes}min")
-        }
+        if (minutes > 0) parts.add("${minutes}min")
 
-        "Toca em " + parts.joinToString(" ")
+        // Retorno padrão da lambda
+        return@toComponents "Toca em " + parts.joinToString(" ")
     }
 }

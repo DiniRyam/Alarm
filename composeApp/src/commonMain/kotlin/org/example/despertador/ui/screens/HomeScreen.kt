@@ -52,7 +52,12 @@ import org.example.despertador.utils.calculateNextAlarmTime
 import org.example.despertador.utils.formatDuration
 
 @Composable
-fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmData) -> Unit) {
+fun MainHomeScreen(
+    alarms: SnapshotStateList<AlarmData>,
+    onTriggerAlarm: (AlarmData) -> Unit,
+    onSaveAlarm: (AlarmData) -> Unit,
+    onDelete: (AlarmData) -> Unit
+) {
     var showModal by remember { mutableStateOf(false) }
     var editingAlarm by remember { mutableStateOf<AlarmData?>(null) }
 
@@ -63,7 +68,7 @@ fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmD
         Modifier
             .fillMaxSize()
             .background(Color(0xFF0F172A))
-    ) { 
+    ) {
         Box(modifier = Modifier.blur(blurRadius)) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
@@ -128,10 +133,9 @@ fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmD
                                 AlarmCard(
                                     alarm = alarm,
                                     onEnabledChange = { isEnabled ->
-                                        val index = alarms.indexOfFirst { it.id == alarm.id }
-                                        if (index != -1) alarms[index] = alarm.copy(isEnabled = isEnabled)
+                                        onSaveAlarm(alarm.copy(isEnabled = isEnabled))
                                     },
-                                    onDelete = { alarms.remove(alarm) },
+                                    onDelete = { onDelete(alarm) },
                                     onEditClick = {
                                         editingAlarm = alarm
                                         showModal = true
@@ -153,20 +157,17 @@ fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmD
             ConfigAlarmModal(
                 alarm = editingAlarm,
                 onSave = { name, days, snooze, vib, newTime, newPeriod ->
-                    if (editingAlarm != null) {
-                        val index = alarms.indexOfFirst { it.id == editingAlarm!!.id }
-                        if (index != -1) {
-                            alarms[index] = editingAlarm!!.copy(
-                                label = name,
-                                selectedDays = days,
-                                snoozeTime = snooze,
-                                vibrationEnabled = vib,
-                                time = newTime,
-                                period = newPeriod
-                            )
-                        }
+                    val alarmToSave = if (editingAlarm != null) {
+                        editingAlarm!!.copy(
+                            label = name,
+                            selectedDays = days,
+                            snoozeTime = snooze,
+                            vibrationEnabled = vib,
+                            time = newTime,
+                            period = newPeriod
+                        )
                     } else {
-                        alarms.add(AlarmData(
+                        AlarmData(
                             time = newTime,
                             period = newPeriod,
                             label = name.ifBlank { "Alarme" },
@@ -174,8 +175,9 @@ fun MainHomeScreen(alarms: SnapshotStateList<AlarmData>, onTriggerAlarm: (AlarmD
                             selectedDays = days,
                             snoozeTime = snooze,
                             vibrationEnabled = vib
-                        ))
+                        )
                     }
+                    onSaveAlarm(alarmToSave)
                     showModal = false
                     editingAlarm = null
                 },
